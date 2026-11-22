@@ -24,6 +24,22 @@ try {
   process.exit(1);
 }
 
+// Validate the payload before handing it to the gate: it must be a JSON
+// object naming an X post address, so a typo in POST.json fails loudly
+// here instead of silently producing a refused entry.
+let parsed: unknown;
+try {
+  parsed = JSON.parse(post.toString('utf8'));
+} catch (err) {
+  console.error(`POST.json is not valid JSON: ${(err as Error).message}`);
+  process.exit(1);
+}
+const url = (parsed as { url?: unknown } | null)?.url;
+if (typeof url !== 'string' || !url.startsWith('https://x.com/')) {
+  console.error('POST.json must contain a "url" string starting with "https://x.com/"');
+  process.exit(1);
+}
+
 try {
   writeFileSync(target, post);
 } catch (err) {
